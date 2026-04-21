@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { supabase } from '../api-client.ts';
+import { api } from '../api-client.ts';
 import { ShieldCheck, Loader2, Mail, Key, UserPlus, LogIn } from 'lucide-react';
 
 const Auth: React.FC = () => {
@@ -11,14 +11,14 @@ const Auth: React.FC = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) return;
     setLoading(true);
     try {
-      const { error } = isSignUp 
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      if (isSignUp) alert('Compte créé avec succès ! Connectez-vous.');
+      if (isSignUp) {
+        await api.register(email, password);
+        alert('Compte créé avec succès ! Connectez-vous.');
+      } else {
+        await api.login(email, password);
+      }
     } catch (error: any) {
       alert(error.message);
     } finally {

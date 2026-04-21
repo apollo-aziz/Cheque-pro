@@ -11,7 +11,7 @@ import CheckModal from './components/CheckModal.tsx';
 import Auth from './components/Auth.tsx';
 import MobileLayout from './mobile/MobileLayout.tsx';
 import { AppTab, Check, SystemSettings, CheckStatus, AppNotification } from './types.ts';
-import { supabase, isConfigured } from './api-client.ts';
+import { api } from './api-client.ts';
 import { Bell, CheckCheck } from 'lucide-react';
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -108,52 +108,39 @@ const App: React.FC = () => {
     });
   }, [checks, addNotification]);
 
+  // Auth: restore session on mount
   useEffect(() => {
-    if (!isConfigured) return;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    api.getSession().then(user => {
+      setSession(user ? { user } : null);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-    return () => subscription.unsubscribe();
   }, []);
 
   const syncWithServer = useCallback(async () => {
-    if (!session || !isConfigured) return;
+    if (!session) return;
     
     try {
-      let checksQuery = supabase.from('checks').select('*');
+      const allChecks = await api.getChecks();
       
-      // FEATURE: If user is a manager (admin or user@apollo.com), fetch ALL checks
-      // Otherwise, only fetch checks created by the current user
-      if (!isManager) {
-        checksQuery = checksQuery.eq('created_by', session.user.id);
-      }
+      // Filter checks by user if not manager
+      const visibleChecks = isManager 
+        ? allChecks 
+        : allChecks.filter((c: any) => c.created_by === session.user.id);
+      
+      // Sort by created_at descending
+      visibleChecks.sort((a: any, b: any) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      setChecks(visibleChecks);
 
-      const [checksRes, settingsRes] = await Promise.all([
-        checksQuery.order('created_at', { ascending: false }),
-        supabase
-          .from('cheque_settings')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle()
-      ]);
-
-      if (checksRes.error) throw checksRes.error;
-      if (checksRes.data) setChecks(checksRes.data);
-
-      if (settingsRes.error && settingsRes.error.code !== 'PGRST116') {
-        throw settingsRes.error;
-      }
-
-      if (settingsRes.data) {
+      const settingsData = await api.getSettings();
+      if (settingsData) {
         setSettings({
           ...DEFAULT_SETTINGS,
-          ...settingsRes.data,
-          alert_before: String(settingsRes.data.alert_before) === 'true',
-          alert_delay: String(settingsRes.data.alert_delay) === 'true',
-          alert_days: parseInt(settingsRes.data.alert_days) || 3
+          ...settingsData,
+          alert_before: String(settingsData.alert_before) === 'true',
+          alert_delay: String(settingsData.alert_delay) === 'true',
+          alert_days: parseInt(settingsData.alert_days) || 3
         });
       }
     } catch (err) {
@@ -177,14 +164,14 @@ const App: React.FC = () => {
 
   const handleSaveSettings = async (newSettings: SystemSettings) => {
     setSettings(newSettings);
-    if (isConfigured && session) {
-      const { error } = await supabase.from('cheque_settings').upsert({
-        ...newSettings,
-        user_id: session.user.id,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
-      if (error) {
-        console.error('Settings Update Error:', error);
+    if (session) {
+      try {
+        await api.updateSettings({
+          ...newSettings,
+          user_id: session.user.id
+        });
+      } catch (err) {
+        console.error('Settings Update Error:', err);
       }
     }
   };
@@ -193,13 +180,15 @@ const App: React.FC = () => {
     if (!session) return;
     const isEditing = !!editingCheck;
     
-    if (isConfigured) {
+    try {
       if (isEditing) {
-        await supabase.from('checks').update({ ...checkData }).eq('id', editingCheck.id);
+        await api.updateCheck(editingCheck.id, checkData);
       } else {
-        await supabase.from('checks').insert({ ...checkData, created_by: session.user.id });
+        await api.createCheck({ ...checkData, created_by: session.user.id });
       }
       syncWithServer();
+    } catch (err) {
+      console.error('Save Check Error:', err);
     }
     
     setIsModalOpen(false);
@@ -208,28 +197,44 @@ const App: React.FC = () => {
 
   const handleMarkAsPaid = async (id: string) => {
     setChecks(prev => prev.map(c => c.id === id ? { ...c, status: CheckStatus.PAID } : c));
-    if (isConfigured) await supabase.from('checks').update({ status: CheckStatus.PAID }).eq('id', id);
+    try {
+      await api.updateCheck(id, { status: CheckStatus.PAID });
+    } catch (err) {
+      console.error('Mark as Paid Error:', err);
+    }
   };
 
   const handleDeleteCheck = async (id: string) => {
     if (window.confirm('Supprimer définitivement cet instrument ?')) {
       setChecks(prev => prev.filter(c => c.id !== id));
-      if (isConfigured) await supabase.from('checks').delete().eq('id', id);
+      try {
+        await api.deleteCheck(id);
+      } catch (err) {
+        console.error('Delete Check Error:', err);
+      }
     }
   };
 
   const handleBatchMarkAsPaid = async (ids: string[]) => {
     setChecks(prev => prev.map(c => ids.includes(c.id) ? { ...c, status: CheckStatus.PAID } : c));
-    if (isConfigured) {
-      await supabase.from('checks').update({ status: CheckStatus.PAID }).in('id', ids);
+    try {
+      for (const id of ids) {
+        await api.updateCheck(id, { status: CheckStatus.PAID });
+      }
+    } catch (err) {
+      console.error('Batch Mark as Paid Error:', err);
     }
   };
 
   const handleBatchDelete = async (ids: string[]) => {
     if (window.confirm(`Supprimer définitivement ces ${ids.length} instruments ?`)) {
       setChecks(prev => prev.filter(c => !ids.includes(c.id)));
-      if (isConfigured) {
-        await supabase.from('checks').delete().in('id', ids);
+      try {
+        for (const id of ids) {
+          await api.deleteCheck(id);
+        }
+      } catch (err) {
+        console.error('Batch Delete Error:', err);
       }
     }
   };
@@ -248,7 +253,8 @@ const App: React.FC = () => {
         onMarkAsPaid={handleMarkAsPaid}
         onLogout={() => {
           localStorage.clear();
-          supabase.auth.signOut();
+          api.signOut();
+          window.location.reload();
         }}
         isAdmin={isManager}
         userEmail={userEmail}
@@ -265,7 +271,8 @@ const App: React.FC = () => {
         logoUrl={settings.logo_url}
         onLogout={() => {
           localStorage.clear();
-          supabase.auth.signOut();
+          api.signOut();
+          window.location.reload();
         }}
         userEmail={session.user.email}
         isCollapsed={isSidebarCollapsed}
