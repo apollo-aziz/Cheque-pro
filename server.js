@@ -207,7 +207,7 @@ app.use((req, res, next) => {
         let code = result.code;
 
         // Inject essential environment variables into the client-side code.
-        const envKeys = ['API_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+        const envKeys = ['API_KEY'];
         envKeys.forEach(key => {
           const val = process.env[key] || '';
           const regex = new RegExp(`process\\.env\\.${key}`, 'g');

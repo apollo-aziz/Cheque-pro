@@ -6,7 +6,7 @@ const ASSETS = [
   '/index.tsx',
   '/types.ts',
   '/constants.tsx',
-  '/supabase.ts'
+  '/api-client.ts'
 ];
 
 self.addEventListener('install', (event) => {
