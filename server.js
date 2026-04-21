@@ -191,6 +191,7 @@ app.use((req, res, next) => {
     // Check cache first
     if (transpileCache.has(filePath)) {
       res.set('Content-Type', 'application/javascript');
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       return res.send(transpileCache.get(filePath));
     }
 
@@ -218,6 +219,7 @@ app.use((req, res, next) => {
         transpileCache.set(filePath, code);
 
         res.set('Content-Type', 'application/javascript');
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
         return res.send(code);
       } catch (err) {
         console.error(`Transpilation error for ${req.path}:`, err);
