@@ -15,7 +15,20 @@ let content = fs.readFileSync(inputFile, 'utf8');
 content = content.replace(/"public"\."checks"/g, 'checks');
 content = content.replace(/"(id|check_number|bank_name|amount|issue_date|due_date|entity_name|type|status|image_url|created_at|notes|fund_name|amount_in_words|created_by)"/g, '$1');
 
-console.log('Step 2: Fixing created_by foreign keys...');
+console.log('Step 2: Fixing created_at timestamps...');
+// Extract YYYY-MM-DD HH:MM:SS from ISO timestamps (remove timezone info)
+content = content.replace(/'(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.\d+)?(?:[+-]\d{2}:\d{2})?'/g, "'$1 $2'");
+// Add default time 00:00:00 to plain dates (YYYY-MM-DD without time)
+content = content.replace(/'(\d{4}-\d{2}-\d{2})'(?!\d)/g, "'$1 00:00:00'");
+
+console.log('Step 3: Fixing status values...');
+// Ensure status is lowercase and valid for MySQL ENUM
+content = content.replace(/'PENDING'/g, "'pending'");
+content = content.replace(/'PAID'/g, "'paid'");
+content = content.replace(/'RETURNED'/g, "'returned'");
+content = content.replace(/'GARANTIE'/g, "'garantie'");
+
+console.log('Step 4: Fixing created_by foreign keys...');
 // Replace all UUIDs in created_by position with default admin user
 content = content.replace(/'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'(\s*\))/g, `'${defaultUserId}'$1`);
 
@@ -23,7 +36,7 @@ content = content.replace(/'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f
 fs.writeFileSync('checks_rows_mysql.sql', content);
 console.log('Converted file saved: checks_rows_mysql.sql');
 
-console.log('\nStep 3: Splitting into smaller chunks...');
+console.log('\nStep 5: Splitting into smaller chunks...');
 
 // Extract prefix
 const valuesMatch = content.match(/^(INSERT INTO checks \([^)]+\) VALUES )/);
