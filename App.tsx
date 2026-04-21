@@ -12,7 +12,7 @@ import Auth from './components/Auth.tsx';
 import MobileLayout from './mobile/MobileLayout.tsx';
 import { AppTab, Check, SystemSettings, CheckStatus, AppNotification } from './types.ts';
 import { supabase, isConfigured } from './api-client.ts';
-import { Loader2, Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck } from 'lucide-react';
 
 const DEFAULT_SETTINGS: SystemSettings = {
   company_name: 'FINANSSE PRO',
@@ -43,7 +43,7 @@ const App: React.FC = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCheck, setEditingCheck] = useState<Check | null>(null);
-  const [loading, setLoading] = useState(true);
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   const userEmail = session?.user?.email;
@@ -158,8 +158,6 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error('Sync Error:', err);
-    } finally {
-      setLoading(false);
     }
   }, [session, isManager]);
 
@@ -235,21 +233,6 @@ const App: React.FC = () => {
       }
     }
   };
-
-  if (loading && session) return (
-    <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center gap-6">
-      <div className="relative">
-        <div className="w-20 h-20 rounded-full border-t-2 border-gold animate-spin"></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-gold/30 animate-pulse" />
-        </div>
-      </div>
-      <div className="text-center space-y-2">
-        <h2 className="text-xl font-bold tracking-widest text-white/80 uppercase italic">FINANSSE PRO</h2>
-        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] animate-pulse">Restauration de la session</p>
-      </div>
-    </div>
-  );
 
   if (!session) return <Auth />;
 
