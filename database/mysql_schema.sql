@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS risk_alerts (
 -- Insert default admin user (password: admin123 - change after first login!)
 -- Password hash is for 'admin123' using bcrypt
 INSERT INTO users (id, email, password_hash, full_name, role) VALUES
-('550e8400-e29b-41d4-a716-446655440000', 'admin@apollo.com', '$2b$10$YourHashHere', 'Admin User', 'admin')
+('550e8400-e29b-41d4-a716-446655440000', 'admin@apollo.com', '$2a$10$urWR4FyRwQHsZBr3YYR0K.5lfh6SZOQhoUbiOkf0HRqwQNXITy/J6', 'Admin User', 'admin')
 ON DUPLICATE KEY UPDATE email = email;
 
 -- Insert default settings for admin
