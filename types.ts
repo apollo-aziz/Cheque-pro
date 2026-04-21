@@ -71,6 +71,7 @@ export interface SystemSettings {
   alert_method: string;
   alert_days: number;
   logo_url: string;
+  ai_enabled?: boolean;
 }
 
 export type AppTab = 'dash' | 'checks' | 'dueToday' | 'dueTomorrow' | 'dueWeek' | 'performance' | 'risks' | 'parameters';

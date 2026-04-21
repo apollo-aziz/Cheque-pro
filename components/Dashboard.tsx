@@ -22,14 +22,19 @@ interface DashboardProps {
   currency: any;
   onTabChange: (tab: 'checks') => void;
   isAdmin?: boolean;
+  aiEnabled?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ checks, currency, onTabChange, isAdmin }) => {
+const Dashboard: React.FC<DashboardProps> = ({ checks, currency, onTabChange, isAdmin, aiEnabled }) => {
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('month');
   const [marketIntel, setMarketIntel] = useState<any>(null);
   const [loadingIntel, setLoadingIntel] = useState(false);
 
   useEffect(() => {
+    if (!aiEnabled) {
+      setMarketIntel(null);
+      return;
+    }
     const fetchIntel = async () => {
       setLoadingIntel(true);
       const intel = await getMarketIntel(currency);
@@ -37,7 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({ checks, currency, onTabChange, is
       setLoadingIntel(false);
     };
     fetchIntel();
-  }, [currency]);
+  }, [currency, aiEnabled]);
 
   const filteredByPeriod = useMemo(() => {
     const now = new Date();

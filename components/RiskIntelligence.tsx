@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { 
   ShieldAlert, AlertTriangle, Activity, TrendingDown, 
   ShieldCheck, AlertCircle, ChevronRight,
-  Sparkles, Clock, Loader2, BrainCircuit
+  Sparkles, Clock, Loader2, BrainCircuit, Brain, Settings
 } from 'lucide-react';
 import { Check, CheckStatus, Currency, RiskLevel, FinancialRisk, CheckType } from '../types.ts';
 import { formatCurrency } from '../constants.tsx';
@@ -13,14 +13,17 @@ interface RiskIntelligenceProps {
   checks: Check[];
   currency: Currency;
   highValueThreshold: number;
+  aiEnabled?: boolean;
   onViewCheck?: (id: string) => void;
+  onEnableAI?: () => void;
 }
 
-const RiskIntelligence: React.FC<RiskIntelligenceProps> = ({ checks, currency, highValueThreshold, onViewCheck }) => {
+const RiskIntelligence: React.FC<RiskIntelligenceProps> = ({ checks, currency, highValueThreshold, aiEnabled, onViewCheck, onEnableAI }) => {
   const [deepAnalysis, setDeepAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const runDeepAnalysis = async () => {
+    if (!aiEnabled) return;
     setIsAnalyzing(true);
     const result = await analyzePortfolioStrategically(checks);
     setDeepAnalysis(result);
@@ -58,14 +61,24 @@ const RiskIntelligence: React.FC<RiskIntelligenceProps> = ({ checks, currency, h
           <p className="text-white/40 text-sm mt-1">Analyse prédictive et détection de fraudes par IA.</p>
         </div>
         
-        <button 
-          onClick={runDeepAnalysis}
-          disabled={isAnalyzing}
-          className="bg-gold text-black px-8 py-4 rounded-[16px] font-black text-[11px] uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-        >
-          {isAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <BrainCircuit size={18} />}
-          Lancer l'Analyse Profonde
-        </button>
+        {aiEnabled ? (
+          <button 
+            onClick={runDeepAnalysis}
+            disabled={isAnalyzing}
+            className="bg-gold text-black px-8 py-4 rounded-[16px] font-black text-[11px] uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+          >
+            {isAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <BrainCircuit size={18} />}
+            Lancer l'Analyse Profonde
+          </button>
+        ) : (
+          <button 
+            onClick={onEnableAI}
+            className="bg-white/5 text-white/60 border border-white/10 px-8 py-4 rounded-[16px] font-black text-[11px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all flex items-center gap-3"
+          >
+            <Brain size={18} />
+            Activer l'IA
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -120,7 +133,17 @@ const RiskIntelligence: React.FC<RiskIntelligenceProps> = ({ checks, currency, h
               <Sparkles size={14} /> Rapport IA Avancé
             </h5>
             <div className="space-y-4">
-              {deepAnalysis ? (
+              {!aiEnabled ? (
+                <div className="py-10 text-center space-y-4">
+                  <Brain size={32} className="mx-auto text-white/10" />
+                  <p className="text-[10px] text-white/20 uppercase font-black italic">
+                    L'analyse IA est désactivée.
+                  </p>
+                  <p className="text-[9px] text-white/10 uppercase font-medium">
+                    Activez-la dans les paramètres pour obtenir des insights stratégiques.
+                  </p>
+                </div>
+              ) : deepAnalysis ? (
                 <div className="text-[11px] text-white/70 leading-relaxed italic prose prose-invert max-w-none">
                   {deepAnalysis}
                 </div>

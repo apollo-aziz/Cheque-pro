@@ -88,7 +88,7 @@ async function getSettings(userId) {
     `SELECT 
       user_id, company_name, currency, timezone, date_format,
       DATE_FORMAT(fiscal_start, '%Y-%m-%d') as fiscal_start,
-      alert_before, alert_delay, alert_method, alert_days, logo_url
+      alert_before, alert_delay, alert_method, alert_days, logo_url, ai_enabled
     FROM settings WHERE user_id = ?`,
     [userId]
   );

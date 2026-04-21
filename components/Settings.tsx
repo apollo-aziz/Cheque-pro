@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Camera, Save, Globe, Building2, Bell, Shield, Coins, Smartphone, CalendarDays, Loader2, Building } from 'lucide-react';
+import { Camera, Save, Globe, Building2, Bell, Shield, Coins, Smartphone, CalendarDays, Loader2, Building, Brain } from 'lucide-react';
 import { SystemSettings } from '../types.ts';
 
 interface SettingsProps {
@@ -157,6 +157,19 @@ const Settings: React.FC<SettingsProps> = ({ settings, onSave }) => {
               active={localSettings.alert_method === 'all'} 
               onClick={() => setLocalSettings({...localSettings, alert_method: localSettings.alert_method === 'all' ? 'app' : 'all'})}
             />
+
+            <div className="pt-6 border-t border-white/5">
+              <div className="flex items-center gap-3 mb-4 text-gold">
+                <Brain size={18} />
+                <h5 className="text-[10px] font-black tracking-[0.2em] uppercase">INTELLIGENCE ARTIFICIELLE</h5>
+              </div>
+              <NotificationToggle 
+                label="Activer l'analyse IA" 
+                desc="Analyse de risques et extraction OCR via Gemini" 
+                active={localSettings.ai_enabled} 
+                onClick={() => setLocalSettings({...localSettings, ai_enabled: !localSettings.ai_enabled})}
+              />
+            </div>
 
             <div className="pt-10 space-y-8">
                <div className="flex justify-between items-center">

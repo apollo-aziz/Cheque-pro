@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS settings (
     alert_method VARCHAR(50) DEFAULT 'app',
     alert_days INT DEFAULT 3,
     logo_url TEXT,
+    ai_enabled BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

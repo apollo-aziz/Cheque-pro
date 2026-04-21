@@ -8,6 +8,7 @@ interface CheckModalProps {
   onClose: () => void;
   onSave: (check: Partial<Check>) => void;
   initialData?: Check | null;
+  aiEnabled?: boolean;
 }
 
 const InputWrapper = ({ label, icon: Icon, children }: any) => (
@@ -24,7 +25,7 @@ const InputWrapper = ({ label, icon: Icon, children }: any) => (
   </div>
 );
 
-const CheckModal: React.FC<CheckModalProps> = ({ onClose, onSave, initialData }) => {
+const CheckModal: React.FC<CheckModalProps> = ({ onClose, onSave, initialData, aiEnabled }) => {
   const [formData, setFormData] = useState<Partial<Check>>(
     initialData || {
       check_number: '',
@@ -62,16 +63,18 @@ const CheckModal: React.FC<CheckModalProps> = ({ onClose, onSave, initialData })
       const base64 = event.target?.result as string;
       setFormData(prev => ({ ...prev, image_url: base64 }));
 
-      const extracted = await extractCheckData(base64);
-      if (extracted) {
-        setFormData(prev => ({
-          ...prev,
-          ...extracted,
-          // الاحتفاظ بتاريخ الإصدار الحالي (اليوم) وعدم استبداله بالبيانات المستخرجة
-          issue_date: prev.issue_date,
-          due_date: extracted.due_date || prev.due_date,
-          notes: extracted.notes || prev.notes,
-        }));
+      if (aiEnabled) {
+        const extracted = await extractCheckData(base64);
+        if (extracted && !extracted.error) {
+          setFormData(prev => ({
+            ...prev,
+            ...extracted,
+            // الاحتفاظ بتاريخ الإصدار الحالي (اليوم) وعدم استبداله بالبيانات المستخرجة
+            issue_date: prev.issue_date,
+            due_date: extracted.due_date || prev.due_date,
+            notes: extracted.notes || prev.notes,
+          }));
+        }
       }
       setIsProcessing(false);
     };

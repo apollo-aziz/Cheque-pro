@@ -24,7 +24,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
   alert_delay: true,
   alert_method: 'app',
   alert_days: 3,
-  logo_url: ''
+  logo_url: '',
+  ai_enabled: false
 };
 
 const DEFAULT_FAVICON = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>P</text></svg>';
@@ -321,7 +322,7 @@ const App: React.FC = () => {
         </div>
 
         <div className="px-8 pb-12 max-w-7xl mx-auto">
-          {activeTab === 'dash' && !isRestrictedUser && <Dashboard checks={checks} currency={settings.currency} onTabChange={setActiveTab} isAdmin={true} />}
+          {activeTab === 'dash' && !isRestrictedUser && <Dashboard checks={checks} currency={settings.currency} onTabChange={setActiveTab} isAdmin={true} aiEnabled={settings.ai_enabled} />}
           {activeTab === 'dueToday' && (
             <DueChecks
               checks={checks}
@@ -371,10 +372,12 @@ const App: React.FC = () => {
               checks={checks}
               currency={settings.currency as any}
               highValueThreshold={50000}
+              aiEnabled={settings.ai_enabled}
               onViewCheck={(id) => {
                 const c = checks.find(ch => ch.id === id);
                 if (c) { setEditingCheck(c); setIsModalOpen(true); }
               }}
+              onEnableAI={() => setActiveTab('parameters')}
             />
           )}
           {activeTab === 'parameters' && !isRestrictedUser && <Settings settings={settings} onSave={handleSaveSettings} />}
@@ -386,6 +389,7 @@ const App: React.FC = () => {
           onClose={() => { setIsModalOpen(false); setEditingCheck(null); }}
           onSave={handleSaveCheck}
           initialData={editingCheck}
+          aiEnabled={settings.ai_enabled}
         />
       )}
     </div>
