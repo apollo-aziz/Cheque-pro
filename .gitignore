@@ -12,6 +12,22 @@ dist
 dist-ssr
 *.local
 .env
+.env.hostinger
+.env.local
+
+# Temporary SQL/data files
+checks_rows*.sql
+checks_part_*.sql
+supabase-export.sql
+
+# Deployment archives
+*.zip
+
+# Helper scripts
+split-sql.js
+fix-foreign-key.js
+process-sql.js
+setup-hostinger.sh
 
 # Editor directories and files
 .vscode/*

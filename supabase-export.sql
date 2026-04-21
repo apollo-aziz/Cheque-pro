@@ -1,6 +1,0 @@
--- Supabase to MySQL Export
--- Generated: 2026-04-21T11:37:13.268Z
-
-SET FOREIGN_KEY_CHECKS = 0;
-
-SET FOREIGN_KEY_CHECKS = 1;
